@@ -1,0 +1,14 @@
+Package: ddqcR
+Type: Package
+Title: ddqc
+Version: 0.1.0
+Author: Who wrote it
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: Biology-centered data-driven quality control for single cell/nucleus RNA sequencing
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Depends:
+  Seurat (>= 4.0.0),
+  ggplot2 (>= 3.3.0)
+RoxygenNote: 7.1.1

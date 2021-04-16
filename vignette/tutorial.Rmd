@@ -1,0 +1,82 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## ddqc Tutorial
+First, lets set up the workspace loading the ddqcR and Seurat packages
+
+```{r}
+library(Seurat)
+library(ddqcR)
+```
+
+### Reading the data
+For this tutorial we will use the Peripheral Blood Mononuclear Cells (PBMC) freely available from 10X Genomics <br>
+We will download the dataset using the following command:
+```{bash}
+curl https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz -o pbmc3k_filtered_gene_bc_matrices.tar.gz
+tar -xzf pbmc3k_filtered_gene_bc_matrices.tar.gz
+rm pbmc3k_filtered_gene_bc_matrices.tar.gz
+```
+
+We will first load the data using the following commands. <br>
+We recommend setting min.cells parameter of 'CreateSeuratObject' to 3
+```{r}
+data.mtx <- Read10X(data.dir = "filtered_gene_bc_matrices/hg19/")
+data <- CreateSeuratObject(counts = data.mtx, project = "pbmc3k", min.cells = 3)
+data
+```
+### Biology-centered data-driven quality control (ddqc)
+ddqcR does adaptive quality control by clustering cells and picking a separate threshold for each cluster. It is described down below:
+
+- Initial Qualtity Control (QC) is performed, when obvious low-quality cells are removed. By default those are cells with n_genes < 100 and percent_mito > 80.
+- The cells are clustered with the clustering resolution 1.3 (default)
+- Then thesholds are picked for each cluster. By default the following metrics are considered:
+    - **Number of counts/UMIs**: keep cells that have n_counts greater than median - 2 Median Absolute Deviations (MAD)
+    - **Number of genes**: keep cells that have n_genes greater than median - 2 MADs
+    - **Percent of mitochondrial transctipts**: keep cells that have percent_mito less than median + 2 MADs
+- In order to prevent the removal of healthy cells in clusters with high median n_genes and low percent_mito there are additional bounds for those thresholds:
+    - Cluster-level threshold for n_genes can't be greater than 200 (default). If it is greater, it will be set to 200.
+    - Cluster-level threshold for percent_mito can't be lower than 10 (default). If it is lower, it will be set to 200.
+
+To perform ddqc on a dataset, we first need to run `initialQC` function to remove obvious bad quality cells
+```{r}
+data <- initialQC(data)
+```
+
+Then we need to run `ddqc.metrics` <br>
+This function will not filter the Seurat object itself, but will return a data.frame with filtering statistics
+
+```{r}
+df.qc <- ddqc.metrics(data)
+```
+### Outputs
+There are two boxplots provided for exploratory data analysis:
+
+- log2(n_genes) by cluster: shows log2 of number of genes for each cluster in the initial clustering. Red line at 200 genes (7.64 in log2 scale) represents the most common fixed threshold cutoff for n_genes.
+- percent_mito by cluster: shows percent_mito for each cluster in the initial clustering. Red line at 10% represents the most common fixed threshold cutoff for percent_mito.
+
+The function will return a dataframe containing the following info for each cell:
+
+- `metric`: QC metric number
+- `cluster_labels`: cluster from initial clustering performed by ddqc
+- `metric.lower.co` and `metric.upper.co`: lower and upper cuttofs for each metric on which ddqc was performed. If ddqc was not performed for upper or lower end of this metric this field will be `None`
+- `metric.passed.qc`: whether the cell passed qc for a given metric
+This information is useful if you want to understand based on which metric the cell was filtered out.
+
+```{r}
+df.qc
+```
+### Filter out the cells
+Now, we will filter out the cells that failed ddqc. Here, we started with 48219 cells and retain 45939 cells.
+```{r}
+data <- filterData(data, df.qc)
+data
+```
+### Save the dataset
+We will save the dataset as data.rds, which can then be imported into the scRNAseq pipeline of your choice for downstream analysis.
+```{r}
+saveRDS(data, file = "data.rds")
+```
+
