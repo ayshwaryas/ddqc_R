@@ -12,18 +12,19 @@ library(ddqcR)
 ```
 
 ### Reading the data
-For this tutorial we will use the Peripheral Blood Mononuclear Cells (PBMC) freely available from 10X Genomics <br>
-We will download the dataset using the following command:
+For this tutorial we will use 10x mouse heart dataset provided by tabula muris <br>
+https://s3.console.aws.amazon.com/s3/buckets/czb-tabula-muris-senis?region=us-west-2&prefix=10x/3_month/10X_P4_7/
+
+First we need to unzip the data
 ```{bash}
-curl https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz -o pbmc3k_filtered_gene_bc_matrices.tar.gz
-tar -xzf pbmc3k_filtered_gene_bc_matrices.tar.gz
-rm pbmc3k_filtered_gene_bc_matrices.tar.gz
+tar -C data/ -xzf data/Heart_and_Aorta-10X_P7_4.tar.gz
 ```
+
 
 We will first load the data using the following commands. <br>
 We recommend setting min.cells parameter of 'CreateSeuratObject' to 3
 ```{r}
-data.mtx <- Read10X(data.dir = "filtered_gene_bc_matrices/hg19/")
+data.mtx <- Read10X(data.dir = "data/Heart_and_Aorta-10X_P7_4/")
 data <- CreateSeuratObject(counts = data.mtx, project = "pbmc3k", min.cells = 3)
 data
 ```
@@ -38,7 +39,7 @@ ddqcR does adaptive quality control by clustering cells and picking a separate t
     - **Percent of mitochondrial transctipts**: keep cells that have percent_mito less than median + 2 MADs
 - In order to prevent the removal of healthy cells in clusters with high median n_genes and low percent_mito there are additional bounds for those thresholds:
     - Cluster-level threshold for n_genes can't be greater than 200 (default). If it is greater, it will be set to 200.
-    - Cluster-level threshold for percent_mito can't be lower than 10 (default). If it is lower, it will be set to 200.
+    - Cluster-level threshold for percent_mito can't be lower than 10 (default). If it is lower, it will be set to 10
 
 To perform ddqc on a dataset, we first need to run `initialQC` function to remove obvious bad quality cells
 ```{r}
@@ -69,7 +70,7 @@ This information is useful if you want to understand based on which metric the c
 df.qc
 ```
 ### Filter out the cells
-Now, we will filter out the cells that failed ddqc. Here, we started with 48219 cells and retain 45939 cells.
+Now, we will filter out the cells that failed ddqc. Here, we started with 2720 cells and retain 2579 cells.
 ```{r}
 data <- filterData(data, df.qc)
 data

@@ -1,12 +1,12 @@
 .clusterData <- function(data, norm.factor=10000, n.pieces=50, res=1, random.seed=29) {
   set.seed(random.seed)
-  data <- NormalizeData(data, normalization.method = "LogNormalize", scale.factor = norm.factor)
-  data <- FindVariableFeatures(data, selection.method = "vst", nfeatures = 2000)
+  data <- NormalizeData(data, normalization.method = "LogNormalize", scale.factor = norm.factor, verbose=FALSE)
+  data <- FindVariableFeatures(data, selection.method = "vst", nfeatures = 2000,  verbose=FALSE)
   all.genes <- rownames(x = data)
-  data <- ScaleData(data, features = all.genes)
-  data <- RunPCA(data, npcs=n.pieces, features = VariableFeatures(data))
-  data <- FindNeighbors(data, dims = 1:n.pieces)
-  data <- FindClusters(data, resolution = res)
+  data <- ScaleData(data, features = all.genes, verbose=FALSE)
+  data <- RunPCA(data, npcs=n.pieces, features = VariableFeatures(data), verbose=FALSE)
+  data <- FindNeighbors(data, dims = 1:n.pieces, verbose=FALSE)
+  data <- FindClusters(data, resolution = res, verbose=FALSE)
   return(data)
 }
 
@@ -158,7 +158,7 @@ ddqc.metrics <- function(data, res=1, threshold=2, do.counts=TRUE, do.genes=TRUE
 #' @export
 filterData <- function(data, df.qc) {
   data[["passed.qc"]] <- df.qc$passed.qc
-  subset(data, subset = passed.qc)
+  data <- subset(data, subset = passed.qc)
   data[["passed.qc"]] <- NULL
   return(data)
 }

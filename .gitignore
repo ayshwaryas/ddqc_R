@@ -1,6 +1,6 @@
 .Rhistory
 .Rproj.user
 *.Rproj
-vignette/filtered_gene_bc_matrices
+vignette/data/Heart_and_Aorta-10X_P7_4/
 *.rds
 .DS_Store
