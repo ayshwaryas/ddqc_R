@@ -116,7 +116,7 @@ initialQC <- function(data, basic.n.genes=100, basic.percent.mt=80, mt.prefix="M
 #' @export
 ddqc.metrics <- function(data, n.pieces=50, k.param=20, res=1, threshold=2, do.counts=TRUE, do.genes=TRUE, do.mito=TRUE, do.ribo=FALSE,
                          n.genes.lower.bound=200, percent.mito.upper.bound=10, random.state=29) {
-  data <- .clusterData(data, res=res, random.seed = random.state)
+  data <- .clusterData(data, res=res, n.pieces=n.pieces, k.param=k.param, random.seed = random.state)
 
   df.qc <- data.frame("cluster_labels"=data$seurat_clusters, row.names=colnames(data))
   passed.qc <- vector(mode="logical", length=length(data$seurat_clusters))
