@@ -1,11 +1,11 @@
-.clusterData <- function(data, norm.factor=10000, n.pieces=50, res=1, random.seed=29) {
+.clusterData <- function(data, norm.factor=10000, n.pieces=50, k.param=20, res=1, random.seed=29) {
   set.seed(random.seed)
   data <- NormalizeData(data, normalization.method = "LogNormalize", scale.factor = norm.factor, verbose=FALSE)
   data <- FindVariableFeatures(data, selection.method = "vst", nfeatures = 2000,  verbose=FALSE)
   all.genes <- rownames(x = data)
   data <- ScaleData(data, features = all.genes, verbose=FALSE)
   data <- RunPCA(data, npcs=n.pieces, features = VariableFeatures(data), verbose=FALSE)
-  data <- FindNeighbors(data, dims = 1:n.pieces, verbose=FALSE)
+  data <- FindNeighbors(data, dims = 1:n.pieces, k.param = k.param, verbose=FALSE)
   data <- FindClusters(data, resolution = res, verbose=FALSE)
   return(data)
 }
@@ -100,6 +100,8 @@ initialQC <- function(data, basic.n.genes=100, basic.percent.mt=80, mt.prefix="M
 #' Returns a data.frame that tells which cells have passed ddqc and additional information
 #'
 #' @param data Seurat object
+#' @param n.pieces number of pieces for clustering. 50 by default
+#' @param k.param k for FindNeighbors. 20 by default
 #' @param res clustering resolution. 1 by default
 #' @param threshold MAD multiplier for ddqc. 2 by default
 #' @param do.counts whether to consider nCount_RNA for ddqc. TRUE by default
@@ -112,7 +114,7 @@ initialQC <- function(data, basic.n.genes=100, basic.percent.mt=80, mt.prefix="M
 #'
 #' @return data.frame with ddqc statistics
 #' @export
-ddqc.metrics <- function(data, res=1, threshold=2, do.counts=TRUE, do.genes=TRUE, do.mito=TRUE, do.ribo=FALSE,
+ddqc.metrics <- function(data, n.pieces=50, k.param=20, res=1, threshold=2, do.counts=TRUE, do.genes=TRUE, do.mito=TRUE, do.ribo=FALSE,
                          n.genes.lower.bound=200, percent.mito.upper.bound=10, random.state=29) {
   data <- .clusterData(data, res=res, random.seed = random.state)
 
